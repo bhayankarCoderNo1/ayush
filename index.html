@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Binary Tree Visualizer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: #f8f9fa;
+    }
+    h1 {
+      margin-bottom: 10px;
+      color: #2c3e50;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 300px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      margin-left: 10px;
+      font-size: 16px;
+      background-color: steelblue;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    svg {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Binary Tree Visualizer</h1>
+  <p>Enter comma-separated numbers (e.g. 4,2,5,1,3)</p>
+  <input type="text" id="inputValues" placeholder="Enter numbers">
+  <button onclick="generateTree()">Visualize</button>
+
+  <svg id="tree" width="800" height="600"></svg>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    function generateTree() {
+      const input = document.getElementById('inputValues').value;
+      const values = input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+
+      if (!values.length) {
+        alert("Please enter valid numbers.");
+        return;
+      }
+
+      const root = buildTree(values);
+
+      const svg = d3.select("#tree");
+      svg.selectAll("*").remove();
+
+      const width = +svg.attr("width");
+      const height = +svg.attr("height");
+
+      const treeLayout = d3.tree().size([width - 100, height - 100]);
+      const hierarchy = d3.hierarchy(root, d => d.children);
+      treeLayout(hierarchy);
+
+      const g = svg.append("g").attr("transform", "translate(50,50)");
+
+      // Draw links
+      g.selectAll(".link")
+        .data(hierarchy.links())
+        .enter()
+        .append("line")
+        .attr("class", "link")
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y)
+        .attr("stroke", "#aaa");
+
+      // Draw nodes
+      const node = g.selectAll(".node")
+        .data(hierarchy.descendants())
+        .enter()
+        .append("g")
+        .attr("class", "node")
+        .attr("transform", d => `translate(${d.x},${d.y})`);
+
+      node.append("circle")
+        .attr("r", 20)
+        .attr("fill", "white")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 3);
+
+      node.append("text")
+        .attr("dy", 5)
+        .attr("text-anchor", "middle")
+        .text(d => d.data.value);
+    }
+
+    function buildTree(values) {
+      function insert(node, value) {
+        if (!node) return { value, children: [] };
+        if (value < node.value) {
+          node.children[0] = insert(node.children[0], value);
+        } else {
+          node.children[1] = insert(node.children[1], value);
+        }
+        return node;
+      }
+
+      let root = null;
+      values.forEach(v => {
+        root = insert(root, v);
+      });
+      return root;
+    }
+  </script>
+</body>
+</html>
